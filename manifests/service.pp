@@ -9,6 +9,7 @@ define postfix::service(
   $wakeup = '-',
   $limit = 100,
 ) {
+  $load_path = '/etc/postfix/augeas'
   $use_service = $service ? {
     ''      => $name,
     default => $service,
@@ -23,15 +24,16 @@ define postfix::service(
 
   if ($ensure == 'absent') {
     augeas { "remove postfix master ${name}":
-      context => '/files/etc/postfix/master.cf',
-      changes => "rm ${existing_name}",
-      notify  => Service['postfix'],
-      require => File['/etc/postfix/master.cf'],
+      context   => '/files/etc/postfix/master.cf',
+      changes   => "rm ${existing_name}",
+      notify    => Service['postfix'],
+      require   => File['/etc/postfix/master.cf'],
+      load_path => $load_path,
     }
   } else {
     augeas { "manage postfix master ${name}":
-      context => '/files/etc/postfix/master.cf',
-      changes => [
+      context   => '/files/etc/postfix/master.cf',
+      changes   => [
         "set ${existing_name}/type ${type}",
         "set ${existing_name}/private ${private_bool}",
         "set ${existing_name}/unprivileged ${unprivileged_bool}",
@@ -40,14 +42,15 @@ define postfix::service(
         "set ${existing_name}/limit ${limit}",
         "set ${existing_name}/command ${command}",
       ],
-      notify  => Service['postfix'],
-      require => File['/etc/postfix/master.cf'],
-      onlyif  => "match ${existing_name} size == 1",
+      notify    => Service['postfix'],
+      require   => File['/etc/postfix/master.cf'],
+      onlyif    => "match ${existing_name} size == 1",
+      load_path => $load_path,
     }
 
     augeas { "add postfix master ${name}":
-      context => '/files/etc/postfix/master.cf',
-      changes => [
+      context   => '/files/etc/postfix/master.cf',
+      changes   => [
         "set ${use_service}[last()+1]/type ${type}",
         "set ${new_name}/private ${private_bool}",
         "set ${new_name}/unprivileged ${unprivileged_bool}",
@@ -56,9 +59,10 @@ define postfix::service(
         "set ${new_name}/limit ${limit}",
         "set ${new_name}/command ${command}",
       ],
-      notify  => Service['postfix'],
-      require => File['/etc/postfix/master.cf'],
-      onlyif  => "match ${existing_name} size == 0",
+      notify    => Service['postfix'],
+      require   => File['/etc/postfix/master.cf'],
+      onlyif    => "match ${existing_name} size == 0",
+      load_path => $load_path,
     }
   }
 }
